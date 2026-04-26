@@ -2,6 +2,8 @@
 
 ![WarbankValue](assets/logo_big.png)
 
+![Screenshot](assets/screenshot.png)
+
 > Displays the Auction House and vendor value of items stored in your Warband Bank and regular Bank — at a glance, every time you open the bank.
 
 **Requires [Auctionator](https://www.curseforge.com/wow/addons/auctionator) for AH prices.**
