@@ -1,0 +1,11 @@
+## Interface: 120001
+## Title: WarbankValue
+## Notes: Displays AH and vendor value of items in your Warband Bank and regular Bank. Requires Auctionator for AH prices.
+## Author: NILOAZZURRO
+## Version: 0.1.0
+## OptionalDeps: Auctionator
+## SavedVariables: WarbankValueDB
+
+Scanner.lua
+UI.lua
+WarbankValue.lua
