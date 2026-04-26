@@ -43,7 +43,7 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 
 ## Compatibility
 
-- **Interface:** 11.0.x (The War Within)
+- **Interface:** 12.0.5 (Midnight)
 - **Dependency:** Auctionator (optional but required for AH prices)
 
 ## Changelog
