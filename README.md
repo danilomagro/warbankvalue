@@ -1,6 +1,6 @@
 # WarbankValue
 
-![WarbankValue](assets/logo_big.png)
+![WarbankValue](assets/Logo_big.png)
 
 ![Screenshot](assets/screenshot.png)
 
