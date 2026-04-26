@@ -1,5 +1,7 @@
 # WarbankValue
 
+![WarbankValue](assets/logo_big.png)
+
 > Displays the Auction House and vendor value of items stored in your Warband Bank and regular Bank — at a glance, every time you open the bank.
 
 **Requires [Auctionator](https://www.curseforge.com/wow/addons/auctionator) for AH prices.**
@@ -43,7 +45,7 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 
 ## Compatibility
 
-- **Interface:** 12.0.5 (Midnight)
+- **Interface:** 11.0.x (The War Within)
 - **Dependency:** Auctionator (optional but required for AH prices)
 
 ## Changelog
