@@ -50,9 +50,11 @@ local function OnAddonLoaded(loadedAddonName)
     end
 
     local function PrintWbvHelp()
-        print("[WBV] /wbv debug on|off")
+        print("[WBV] /wbv show - show the panel with the last scan data")
         print("[WBV] /wbv missing")
+        print("[WBV] /wbv resetpos - reset the panel position")
         print("[WBV] /wbv status")
+        print("[WBV] /wbv debug on|off")
     end
 
     SLASH_WARBANKVALUE1 = "/wbv"
@@ -80,6 +82,20 @@ local function OnAddonLoaded(loadedAddonName)
                 return
             end
             print("[WBV] Usage: /wbv debug on|off")
+            return
+        elseif cmd == "show" then
+            if ns.UI and ns.UI.ShowStandalone then
+                ns.UI:ShowStandalone()
+            end
+            if not (ns.Scanner and ns.Scanner.lastScanSummary) then
+                print("[WBV] No scan data yet - open your bank once to populate values.")
+            end
+            return
+        elseif cmd == "resetpos" then
+            if ns.UI and ns.UI.ResetPosition then
+                ns.UI:ResetPosition()
+            end
+            print("[WBV] Panel position reset to default.")
             return
         elseif cmd == "status" then
             print("[WBV] debug = " .. tostring(ns.db.settings.debug))
