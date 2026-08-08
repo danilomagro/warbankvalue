@@ -4,6 +4,9 @@ ns.UI = {}
 
 local UI = ns.UI
 
+local FRAME_WIDTH = 340
+local DEFAULT_POSITION = { x = 50, y = -180 }
+
 local function FormatMoney(copper)
     local amount = copper or 0
     if amount <= 0 then
@@ -25,8 +28,8 @@ function UI:Initialize()
     end
 
     local f = CreateFrame("Frame", "WarbankValueSummaryFrame", UIParent, "BackdropTemplate")
-    f:SetSize(340, 337)
-    f:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 50, -180)
+    f:SetSize(FRAME_WIDTH, 100) -- Height is recomputed by Relayout.
+    f:SetPoint("TOPLEFT", UIParent, "TOPLEFT", DEFAULT_POSITION.x, DEFAULT_POSITION.y)
     f:SetBackdrop({
         bgFile = "Interface/Tooltips/UI-Tooltip-Background",
         edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
@@ -50,15 +53,6 @@ function UI:Initialize()
     end)
     f:Hide()
 
-    local function AddSeparator(anchorFrame)
-        local sep = f:CreateTexture(nil, "ARTWORK")
-        sep:SetColorTexture(0.5, 0.5, 0.5, 0.4)
-        sep:SetHeight(1)
-        sep:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", -4, -4)
-        sep:SetWidth(f:GetWidth() - 16)
-        return sep
-    end
-
     local closeBtn = CreateFrame("Button", nil, f, "UIPanelCloseButton")
     closeBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 0)
     closeBtn:SetScript("OnClick", function() f:Hide() end)
@@ -67,88 +61,165 @@ function UI:Initialize()
     f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -10)
     f.title:SetText("WarbankValue")
 
-    f.warbandHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    f.warbandHeader:SetPoint("TOPLEFT", f.title, "BOTTOMLEFT", 0, -8)
-    f.warbandHeader:SetText("Warband")
+    -- Ordered list of layout entries; Relayout anchors the visible ones in
+    -- sequence below the title and resizes the frame to fit.
+    f.layout = {}
 
-    f.ahText = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.ahText:SetPoint("TOPLEFT", f.warbandHeader, "BOTTOMLEFT", 0, -3)
-    f.ahText:SetText("AH Total: 0c")
-
-    f.vendorText = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.vendorText:SetPoint("TOPLEFT", f.ahText, "BOTTOMLEFT", 0, -3)
-    f.vendorText:SetText("Vendor Total: 0c")
-
-    f.missingText = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.missingText:SetPoint("TOPLEFT", f.vendorText, "BOTTOMLEFT", 0, -3)
-    f.missingText:SetText("Missing Prices: 0")
-
-    f.bagLines = {}
-    for i = 1, 5 do
-        local line = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        if i == 1 then
-            line:SetPoint("TOPLEFT", f.missingText, "BOTTOMLEFT", 0, -5)
-        else
-            line:SetPoint("TOPLEFT", f.bagLines[i - 1], "BOTTOMLEFT", 0, -1)
+    local function AddEntry(anchor, gap, isSep, extraPart)
+        local entry = {
+            anchor = anchor,
+            gap = gap,
+            isSep = isSep or false,
+            visible = true,
+            parts = { anchor },
+        }
+        if extraPart then
+            table.insert(entry.parts, extraPart)
         end
-        line:SetText("")
-        f.bagLines[i] = line
+        table.insert(f.layout, entry)
+        return entry
     end
 
-    f.sep1 = AddSeparator(f.missingText)
+    local function AddHeader(text, gap)
+        local fs = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        fs:SetText(text)
+        return AddEntry(fs, gap)
+    end
 
-    f.bankHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    f.bankHeader:SetPoint("TOPLEFT", f.sep1, "BOTTOMLEFT", 4, -3)
-    f.bankHeader:SetText("Bank")
+    -- Label on the left, value right-aligned on the same line.
+    local function AddStatRow(labelText)
+        local label = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        label:SetText(labelText)
+        local value = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        value:SetPoint("TOP", label, "TOP", 0, 0)
+        value:SetPoint("RIGHT", f, "RIGHT", -12, 0)
+        value:SetJustifyH("RIGHT")
+        value:SetText("")
+        local entry = AddEntry(label, 3, false, value)
+        entry.valueFS = value
+        return entry
+    end
 
-    f.bankAHText = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.bankAHText:SetPoint("TOPLEFT", f.bankHeader, "BOTTOMLEFT", 0, -3)
-    f.bankAHText:SetText("AH Total: 0c")
+    local function AddSeparator()
+        local sep = f:CreateTexture(nil, "ARTWORK")
+        sep:SetColorTexture(0.5, 0.5, 0.5, 0.4)
+        sep:SetHeight(1)
+        sep:SetWidth(FRAME_WIDTH - 16)
+        return AddEntry(sep, 4, true)
+    end
 
-    f.bankVendorText = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.bankVendorText:SetPoint("TOPLEFT", f.bankAHText, "BOTTOMLEFT", 0, -3)
-    f.bankVendorText:SetText("Vendor Total: 0c")
+    local function AddTextLine(gap)
+        local fs = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        fs:SetText("")
+        return AddEntry(fs, gap)
+    end
 
-    f.bankMissingText = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.bankMissingText:SetPoint("TOPLEFT", f.bankVendorText, "BOTTOMLEFT", 0, -3)
-    f.bankMissingText:SetText("Missing Prices: 0")
+    local notice = f:CreateFontString(nil, "OVERLAY", "GameFontRedSmall")
+    notice:SetWidth(FRAME_WIDTH - 24)
+    notice:SetJustifyH("LEFT")
+    notice:SetText("Auctionator not detected - AH prices unavailable")
+    f.entryNotice = AddEntry(notice, 8)
 
-    local sep2 = AddSeparator(f.bankMissingText)
+    f.entryWarbandHeader = AddHeader("Warband", 8)
+    f.entryWarbandAH = AddStatRow("AH Total")
+    f.entryWarbandVendor = AddStatRow("Vendor Total")
+    f.entryWarbandMissing = AddStatRow("Missing Prices")
+    f.entryWarbandMissing.anchor:SetTextColor(1, 0.55, 0)
+    f.entryWarbandMissing.valueFS:SetTextColor(1, 0.55, 0)
 
-    f.totalHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    f.totalHeader:SetPoint("TOPLEFT", sep2, "BOTTOMLEFT", 4, -3)
-    f.totalHeader:SetText("Total (Warband + Bank)")
+    f.bagEntries = {}
+    for i = 1, 5 do
+        f.bagEntries[i] = AddTextLine(i == 1 and 5 or 1)
+    end
 
-    f.totalAHText = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.totalAHText:SetPoint("TOPLEFT", f.totalHeader, "BOTTOMLEFT", 0, -3)
-    f.totalAHText:SetText("AH Total: 0c")
+    f.entrySep1 = AddSeparator()
 
-    f.totalVendorText = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.totalVendorText:SetPoint("TOPLEFT", f.totalAHText, "BOTTOMLEFT", 0, -3)
-    f.totalVendorText:SetText("Vendor Total: 0c")
+    f.entryBankHeader = AddHeader("Bank", 3)
+    f.entryBankAH = AddStatRow("AH Total")
+    f.entryBankVendor = AddStatRow("Vendor Total")
+    f.entryBankMissing = AddStatRow("Missing Prices")
+    f.entryBankMissing.anchor:SetTextColor(1, 0.55, 0)
+    f.entryBankMissing.valueFS:SetTextColor(1, 0.55, 0)
 
-    local sep3 = AddSeparator(f.totalVendorText)
+    f.entrySep2 = AddSeparator()
 
-    f.topAHHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    f.topAHHeader:SetPoint("TOPLEFT", sep3, "BOTTOMLEFT", 4, -3)
-    f.topAHHeader:SetText("Top AH Items")
+    f.entryTotalHeader = AddHeader("Total (Warband + Bank)", 3)
+    f.entryTotalAH = AddStatRow("AH Total")
+    f.entryTotalVendor = AddStatRow("Vendor Total")
 
-    f.topAHLines = {}
+    f.entrySep3 = AddSeparator()
+
+    f.entryTopHeader = AddHeader("Top AH Items", 3)
+    f.topAHEntries = {}
     for i = 1, 3 do
-        local line = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        if i == 1 then
-            line:SetPoint("TOPLEFT", f.topAHHeader, "BOTTOMLEFT", 0, -3)
-        else
-            line:SetPoint("TOPLEFT", f.topAHLines[i - 1], "BOTTOMLEFT", 0, -2)
-        end
-        line:SetText("")
-        f.topAHLines[i] = line
+        f.topAHEntries[i] = AddTextLine(i == 1 and 3 or 2)
+    end
+
+    -- Conditional entries start hidden until the first scan fills them in.
+    f.entryNotice.visible = false
+    f.entryWarbandMissing.visible = false
+    f.entryBankMissing.visible = false
+    f.entrySep3.visible = false
+    f.entryTopHeader.visible = false
+    for i = 1, #f.bagEntries do
+        f.bagEntries[i].visible = false
+    end
+    for i = 1, #f.topAHEntries do
+        f.topAHEntries[i].visible = false
     end
 
     self.frame = f
+    self:Relayout()
     if ns.dprint then
         ns.dprint("summary frame created")
     end
+end
+
+function UI:Relayout()
+    local f = self.frame
+    if not f then
+        return
+    end
+
+    local prev = f.title
+    local prevIsSep = false
+    local totalHeight = 10 + (f.title:GetStringHeight() or 12)
+
+    for _, entry in ipairs(f.layout) do
+        if entry.visible then
+            for _, part in ipairs(entry.parts) do
+                part:Show()
+            end
+
+            -- Separators extend 4px left of the text column; whatever follows
+            -- one needs the matching +4 to return to the column.
+            local dx = 0
+            if entry.isSep then
+                dx = prevIsSep and 0 or -4
+            elseif prevIsSep then
+                dx = 4
+            end
+
+            entry.anchor:ClearAllPoints()
+            entry.anchor:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", dx, -entry.gap)
+            prev = entry.anchor
+            prevIsSep = entry.isSep
+
+            local height
+            if entry.anchor.GetStringHeight then
+                height = entry.anchor:GetStringHeight()
+            else
+                height = entry.anchor:GetHeight()
+            end
+            totalHeight = totalHeight + entry.gap + (height or 12)
+        else
+            for _, part in ipairs(entry.parts) do
+                part:Hide()
+            end
+        end
+    end
+
+    f:SetHeight(math.floor(totalHeight + 12 + 0.5))
 end
 
 function UI:GetWarbandBankParent()
@@ -213,6 +284,38 @@ function UI:Show()
     end
 end
 
+-- Show the panel outside the bank (e.g. via /wbv show), using the last scan data.
+function UI:ShowStandalone()
+    if not self.frame then
+        return
+    end
+
+    self.frame:ClearAllPoints()
+    self.frame:SetParent(UIParent)
+    local pos = ns.db and ns.db.settings and ns.db.settings.framePos
+    if pos then
+        self.frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", pos.x, pos.y)
+    else
+        self.frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", DEFAULT_POSITION.x, DEFAULT_POSITION.y)
+    end
+    self.frame:Show()
+
+    local last = ns.Scanner and ns.Scanner.lastScanSummary
+    if last then
+        self:UpdateSummary(last)
+    end
+end
+
+function UI:ResetPosition()
+    if ns.db and ns.db.settings then
+        ns.db.settings.framePos = nil
+    end
+    if self.frame and self.frame:IsShown() then
+        self.frame:ClearAllPoints()
+        self.frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", DEFAULT_POSITION.x, DEFAULT_POSITION.y)
+    end
+end
+
 function UI:Hide()
     if self.frame then
         self.frame:Hide()
@@ -227,43 +330,53 @@ function UI:UpdateSummary(summary)
     summary = summary or {}
     local warband = summary.warband or summary
     local bank = summary.bank or {}
+    local f = self.frame
 
-    self.frame.ahText:SetText("AH Total: " .. FormatMoney(warband.ahValue or 0))
-    self.frame.vendorText:SetText("Vendor Total: " .. FormatMoney(warband.vendorValue or 0))
-    self.frame.missingText:SetText("Missing Prices: " .. tostring(warband.missingPrices or 0))
+    f.entryNotice.visible = summary.auctionatorAvailable == false
 
-    self.frame.bankAHText:SetText("AH Total: " .. FormatMoney(bank.ahValue or 0))
-    self.frame.bankVendorText:SetText("Vendor Total: " .. FormatMoney(bank.vendorValue or 0))
-    self.frame.bankMissingText:SetText("Missing Prices: " .. tostring(bank.missingPrices or 0))
+    f.entryWarbandAH.valueFS:SetText(FormatMoney(warband.ahValue or 0))
+    f.entryWarbandVendor.valueFS:SetText(FormatMoney(warband.vendorValue or 0))
+    local warbandMissing = warband.missingPrices or 0
+    f.entryWarbandMissing.visible = warbandMissing > 0
+    f.entryWarbandMissing.valueFS:SetText(tostring(warbandMissing))
 
-    self.frame.totalAHText:SetText("AH Total: " .. FormatMoney((warband.ahValue or 0) + (bank.ahValue or 0)))
-    self.frame.totalVendorText:SetText("Vendor Total: " .. FormatMoney((warband.vendorValue or 0) + (bank.vendorValue or 0)))
+    f.entryBankAH.valueFS:SetText(FormatMoney(bank.ahValue or 0))
+    f.entryBankVendor.valueFS:SetText(FormatMoney(bank.vendorValue or 0))
+    local bankMissing = bank.missingPrices or 0
+    f.entryBankMissing.visible = bankMissing > 0
+    f.entryBankMissing.valueFS:SetText(tostring(bankMissing))
+
+    f.entryTotalAH.valueFS:SetText(FormatMoney((warband.ahValue or 0) + (bank.ahValue or 0)))
+    f.entryTotalVendor.valueFS:SetText(FormatMoney((warband.vendorValue or 0) + (bank.vendorValue or 0)))
 
     local breakdown = warband.bagBreakdown or summary.bagBreakdown or {}
-    local lastFilledLine = nil
-    for i = 1, #self.frame.bagLines do
-        local line = self.frame.bagLines[i]
+    for i = 1, #f.bagEntries do
+        local entry = f.bagEntries[i]
         local bagSummary = breakdown[i]
         if bagSummary then
-            line:SetText(FormatBagBreakdownLine(bagSummary))
-            lastFilledLine = line
+            entry.anchor:SetText(FormatBagBreakdownLine(bagSummary))
+            entry.visible = true
         else
-            line:SetText("")
+            entry.anchor:SetText("")
+            entry.visible = false
         end
     end
-
-    self.frame.sep1:ClearAllPoints()
-    self.frame.sep1:SetPoint("TOPLEFT", lastFilledLine or self.frame.missingText, "BOTTOMLEFT", -4, -4)
-    self.frame.sep1:SetWidth(self.frame:GetWidth() - 16)
 
     local topAHItems = summary.topAHItems or {}
-    for i = 1, #self.frame.topAHLines do
-        local line = self.frame.topAHLines[i]
+    for i = 1, #f.topAHEntries do
+        local entry = f.topAHEntries[i]
         local item = topAHItems[i]
         if item then
-            line:SetText(tostring(i) .. ". [" .. tostring(item.source or "?") .. "] " .. tostring(item.name or "Unknown") .. " - " .. FormatMoney(item.value or 0))
+            entry.anchor:SetText(tostring(i) .. ". [" .. tostring(item.source or "?") .. "] " .. tostring(item.name or "Unknown") .. " - " .. FormatMoney(item.value or 0))
+            entry.visible = true
         else
-            line:SetText("")
+            entry.anchor:SetText("")
+            entry.visible = false
         end
     end
+    local hasTopItems = topAHItems[1] ~= nil
+    f.entrySep3.visible = hasTopItems
+    f.entryTopHeader.visible = hasTopItems
+
+    self:Relayout()
 end
