@@ -6,3 +6,5 @@ ignore:
   - .pkgmeta
   - .git
   - .gitignore
+  - assets
+  - README.md

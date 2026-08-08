@@ -13,12 +13,12 @@
 WarbankValue adds a small, movable summary panel that appears whenever you open your bank. It scans all Warband Bank tabs and your regular Bank slots and shows:
 
 - **AH value** — estimated market value via Auctionator prices
-- **Vendor value** — Blizzard sell price for bound items
+- **Vendor value** — Blizzard sell price for bound and non-auctionable items
 - **Per-tab breakdown** — AH and vendor value for each Warband Bank tab
-- **Top 3 AH items** — the most valuable auctionable items across all storage
-- **Missing prices** — count of items Auctionator has no price data for yet
+- **Top 3 AH items** — the most valuable auctionable items across all storage, aggregated per item
+- **Missing prices** — count of items Auctionator has no price data for yet (shown only when > 0)
 
-Soulbound and Warbound items are correctly excluded from AH valuation and counted at vendor price instead.
+Soulbound and Warbound items are correctly excluded from AH valuation and counted at vendor price instead. Items with no AH price also fall back to their vendor price, so the totals always cover everything in the bank. The panel resizes to fit its content, and if Auctionator is missing a notice is shown instead of silent zeros.
 
 ## Installation
 
@@ -32,7 +32,9 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 | Command | Description |
 |---|---|
 | `/wbv` | Show help |
+| `/wbv show` | Show the panel outside the bank with the last scan data |
 | `/wbv missing` | List items with no Auctionator price data |
+| `/wbv resetpos` | Reset the panel position to default |
 | `/wbv status` | Show current settings |
 | `/wbv debug on\|off` | Toggle debug output |
 
@@ -45,10 +47,19 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 
 ## Compatibility
 
-- **Interface:** 12.0.5 (Midnight)
+- **Interface:** 12.0.7 and 12.1.0 (Midnight)
 - **Dependency:** Auctionator (optional but required for AH prices)
 
 ## Changelog
+
+### 0.2.0
+- Items without an AH valuation now count at vendor price — totals always cover the whole bank
+- Top AH Items aggregated per item instead of per stack
+- Panel auto-resizes to fit its content; values right-aligned in a second column
+- Missing Prices rows shown only when relevant, highlighted in orange
+- Notice shown when Auctionator is not installed
+- New `/wbv show` and `/wbv resetpos` commands
+- Interface bumped to 12.0.7 / 12.1.0
 
 ### 0.1.0
 - Initial release
