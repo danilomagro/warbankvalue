@@ -359,46 +359,55 @@ function Scanner:AccumulateBagSummary(rootSummary, sectionSummary, bagSummary, s
     end
 
     bagSummary.occupiedSlots = bagSummary.occupiedSlots + 1
-    if slotInfo.isBound then
+
+    local function AddVendorValue()
         local vendorPricePerItem = GetBlizzardVendorSellPrice(slotInfo.itemLink, slotInfo.itemID)
         local stackVendor = vendorPricePerItem * slotInfo.stackCount
         bagSummary.vendorValue = bagSummary.vendorValue + stackVendor
         sectionSummary.vendorValue = sectionSummary.vendorValue + stackVendor
-    else
-        local isAuctionEligible = IsAHEligible(slotInfo)
-        if isAuctionEligible and slotInfo.itemLink and rootSummary.auctionatorAvailable then
-            local ahPricePerItem = GetAuctionatorPrice(slotInfo)
-            if ahPricePerItem and ahPricePerItem > 0 then
-                local stackAH = ahPricePerItem * slotInfo.stackCount
-                bagSummary.ahValue = bagSummary.ahValue + stackAH
-                sectionSummary.ahValue = sectionSummary.ahValue + stackAH
-                if topItems then
-                    table.insert(topItems, {
-                        name = GetItemDisplayName(slotInfo.itemLink, slotInfo.itemID),
-                        value = stackAH,
-                        source = sourceLabel,
-                    })
-                end
-            else
-                bagSummary.missingPrices = bagSummary.missingPrices + 1
-                sectionSummary.missingPrices = sectionSummary.missingPrices + 1
-                if missingMerged then
-                    local idKey = slotInfo.itemID or slotInfo.itemLink or "unknown"
-                    local key = sourceLabel .. "|" .. tostring(idKey)
-                    if not missingMerged[key] then
-                        missingMerged[key] = {
-                            source = sourceLabel,
-                            name = GetItemDisplayName(slotInfo.itemLink, slotInfo.itemID),
-                            count = 0,
-                        }
-                    end
-                    missingMerged[key].count = missingMerged[key].count + slotInfo.stackCount
-                end
+    end
+
+    if slotInfo.isBound then
+        AddVendorValue()
+        return
+    end
+
+    local isAuctionEligible = IsAHEligible(slotInfo)
+    if isAuctionEligible and slotInfo.itemLink and rootSummary.auctionatorAvailable then
+        local ahPricePerItem = GetAuctionatorPrice(slotInfo)
+        if ahPricePerItem and ahPricePerItem > 0 then
+            local stackAH = ahPricePerItem * slotInfo.stackCount
+            bagSummary.ahValue = bagSummary.ahValue + stackAH
+            sectionSummary.ahValue = sectionSummary.ahValue + stackAH
+            if topItems then
+                table.insert(topItems, {
+                    name = GetItemDisplayName(slotInfo.itemLink, slotInfo.itemID),
+                    value = stackAH,
+                    source = sourceLabel,
+                })
             end
-        else
-            -- Auctionator unavailable, item is AH-ineligible, or item data isn't fully cached yet.
+            return
+        end
+
+        bagSummary.missingPrices = bagSummary.missingPrices + 1
+        sectionSummary.missingPrices = sectionSummary.missingPrices + 1
+        if missingMerged then
+            local idKey = slotInfo.itemID or slotInfo.itemLink or "unknown"
+            local key = sourceLabel .. "|" .. tostring(idKey)
+            if not missingMerged[key] then
+                missingMerged[key] = {
+                    source = sourceLabel,
+                    name = GetItemDisplayName(slotInfo.itemLink, slotInfo.itemID),
+                    count = 0,
+                }
+            end
+            missingMerged[key].count = missingMerged[key].count + slotInfo.stackCount
         end
     end
+
+    -- No AH valuation possible (Auctionator unavailable, AH-ineligible, or price
+    -- missing): fall back to vendor price so the item still counts in the totals.
+    AddVendorValue()
 end
 
 function Scanner:BuildSummary()
