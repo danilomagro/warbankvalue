@@ -380,11 +380,20 @@ function Scanner:AccumulateBagSummary(rootSummary, sectionSummary, bagSummary, s
             bagSummary.ahValue = bagSummary.ahValue + stackAH
             sectionSummary.ahValue = sectionSummary.ahValue + stackAH
             if topItems then
-                table.insert(topItems, {
-                    name = GetItemDisplayName(slotInfo.itemLink, slotInfo.itemID),
-                    value = stackAH,
-                    source = sourceLabel,
-                })
+                -- Aggregate by item so multiple stacks of the same item rank once.
+                local key = slotInfo.itemID or slotInfo.itemLink or "unknown"
+                local entry = topItems[key]
+                if not entry then
+                    entry = {
+                        name = GetItemDisplayName(slotInfo.itemLink, slotInfo.itemID),
+                        value = 0,
+                        sources = {},
+                    }
+                    topItems[key] = entry
+                end
+                entry.value = entry.value + stackAH
+                local simpleSource = (sourceLabel:find("^Warband") and "Warband") or sourceLabel
+                entry.sources[simpleSource] = true
             end
             return
         end
@@ -427,6 +436,7 @@ function Scanner:BuildSummary()
         topAHItems = {},
         missingMerged = {},
     }
+    local topAHByItem = {}
 
 
     for _, bagID in ipairs(ACCOUNT_BANK_BAG_IDS) do
@@ -441,7 +451,7 @@ function Scanner:BuildSummary()
 
         for slotInfo in self:IterateBagSlots(bagID) do
             local sourceLabel = bagSummary.tabIndex and ("Warband Tab " .. tostring(bagSummary.tabIndex)) or "Warband"
-            self:AccumulateBagSummary(summary, summary.warband, bagSummary, slotInfo, sourceLabel, summary.topAHItems, summary.missingMerged)
+            self:AccumulateBagSummary(summary, summary.warband, bagSummary, slotInfo, sourceLabel, topAHByItem, summary.missingMerged)
         end
 
         if bagSummary.occupiedSlots > 0 then
@@ -460,10 +470,18 @@ function Scanner:BuildSummary()
             occupiedSlots = 0,
         }
         for slotInfo in self:IterateBagSlots(bagID) do
-            self:AccumulateBagSummary(summary, summary.bank, bagSummary, slotInfo, "Bank", summary.topAHItems, summary.missingMerged)
+            self:AccumulateBagSummary(summary, summary.bank, bagSummary, slotInfo, "Bank", topAHByItem, summary.missingMerged)
         end
     end
 
+    for _, entry in pairs(topAHByItem) do
+        if entry.sources["Warband"] and entry.sources["Bank"] then
+            entry.source = "Both"
+        else
+            entry.source = next(entry.sources) or "?"
+        end
+        table.insert(summary.topAHItems, entry)
+    end
     table.sort(summary.topAHItems, function(a, b)
         return (a.value or 0) > (b.value or 0)
     end)
