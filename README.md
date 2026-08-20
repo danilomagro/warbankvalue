@@ -47,7 +47,7 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 
 ## Compatibility
 
-- **Interface:** 12.0.7 and 12.1.0 (Midnight)
+- **Interface:** 12.1.0 (Midnight)
 - **Dependency:** Auctionator (optional but required for AH prices)
 
 ## Changelog
@@ -59,7 +59,7 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 - Missing Prices rows shown only when relevant, highlighted in orange
 - Notice shown when Auctionator is not installed
 - New `/wbv show` and `/wbv resetpos` commands
-- Interface bumped to 12.0.7 / 12.1.0
+- Interface bumped to 12.1.0
 
 ### 0.1.0
 - Initial release
