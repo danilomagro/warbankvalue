@@ -435,8 +435,18 @@ function Scanner:BuildSummary()
         },
         topAHItems = {},
         missingMerged = {},
+        warbandBankAvailable = false,
     }
     local topAHByItem = {}
+
+    -- On clients without an account bank (e.g. WoW: Forever) these bags have
+    -- no slots; the UI hides the Warband section entirely in that case.
+    for _, bagID in ipairs(ACCOUNT_BANK_BAG_IDS) do
+        if (C_Container.GetContainerNumSlots(bagID) or 0) > 0 then
+            summary.warbandBankAvailable = true
+            break
+        end
+    end
 
 
     for _, bagID in ipairs(ACCOUNT_BANK_BAG_IDS) do

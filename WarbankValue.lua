@@ -208,9 +208,19 @@ frame:SetScript("OnEvent", function(_, event, ...)
     end
 end)
 
-frame:RegisterEvent("ADDON_LOADED")
-frame:RegisterEvent("BANKFRAME_OPENED")
-frame:RegisterEvent("BANKFRAME_CLOSED")
-frame:RegisterEvent("BAG_UPDATE_DELAYED")
-frame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
-frame:RegisterEvent("ITEM_DATA_LOAD_RESULT")
+-- On some clients (e.g. WoW: Forever) registering an unknown event throws and
+-- aborts the file, so guard each registration.
+local EVENTS = {
+    "ADDON_LOADED",
+    "BANKFRAME_OPENED",
+    "BANKFRAME_CLOSED",
+    "BAG_UPDATE_DELAYED",
+    "GET_ITEM_INFO_RECEIVED",
+    "ITEM_DATA_LOAD_RESULT",
+}
+for _, event in ipairs(EVENTS) do
+    local ok = pcall(frame.RegisterEvent, frame, event)
+    if not ok and ns.dprint then
+        ns.dprint("event not available on this client: " .. event)
+    end
+end

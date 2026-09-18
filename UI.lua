@@ -334,10 +334,23 @@ function UI:UpdateSummary(summary)
 
     f.entryNotice.visible = summary.auctionatorAvailable == false
 
+    -- Clients without an account bank (e.g. WoW: Forever) get no Warband
+    -- section and no Total section (the Bank section already is the total).
+    local hasWarband = summary.warbandBankAvailable ~= false
+
+    f.entryWarbandHeader.visible = hasWarband
+    f.entryWarbandAH.visible = hasWarband
+    f.entryWarbandVendor.visible = hasWarband
+    f.entrySep1.visible = hasWarband
+    f.entrySep2.visible = hasWarband
+    f.entryTotalHeader.visible = hasWarband
+    f.entryTotalAH.visible = hasWarband
+    f.entryTotalVendor.visible = hasWarband
+
     f.entryWarbandAH.valueFS:SetText(FormatMoney(warband.ahValue or 0))
     f.entryWarbandVendor.valueFS:SetText(FormatMoney(warband.vendorValue or 0))
     local warbandMissing = warband.missingPrices or 0
-    f.entryWarbandMissing.visible = warbandMissing > 0
+    f.entryWarbandMissing.visible = hasWarband and warbandMissing > 0
     f.entryWarbandMissing.valueFS:SetText(tostring(warbandMissing))
 
     f.entryBankAH.valueFS:SetText(FormatMoney(bank.ahValue or 0))
