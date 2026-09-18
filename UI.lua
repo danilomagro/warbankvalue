@@ -393,9 +393,14 @@ function UI:InitializeMinimapButton()
     end)
 
     btn:SetScript("OnEnter", function(button)
-        -- Refresh so the tooltip totals are current (Bags scan live anywhere).
+        -- Refresh so the tooltip totals are current, but rescan at most every
+        -- few seconds: with a full bank a scan is not free, and repeated
+        -- hovers would otherwise trigger it every time.
         if ns.Scanner and ns.Scanner.ScanSummary then
-            ns.Scanner:ScanSummary()
+            local lastScanAt = ns.Scanner.lastScanAt or 0
+            if GetTime() - lastScanAt > 5 then
+                ns.Scanner:ScanSummary()
+            end
         end
 
         GameTooltip:SetOwner(button, "ANCHOR_LEFT")

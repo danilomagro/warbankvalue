@@ -622,6 +622,7 @@ function Scanner:ScanSummary()
     end
 
     self.lastScanSummary = summary
+    self.lastScanAt = GetTime()
 
     if ns.UI and ns.UI.UpdateSummary then
         ns.UI:UpdateSummary(summary)
