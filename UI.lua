@@ -180,6 +180,7 @@ function UI:Initialize()
 
     self.frame = f
     self:Relayout()
+    self:InitializeMinimapButton()
     if ns.dprint then
         ns.dprint("summary frame created")
     end
@@ -324,6 +325,120 @@ function UI:ResetPosition()
     if self.frame and self.frame:IsShown() then
         self.frame:ClearAllPoints()
         self.frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", DEFAULT_POSITION.x, DEFAULT_POSITION.y)
+    end
+end
+
+local MINIMAP_BUTTON_RADIUS = 80
+
+function UI:InitializeMinimapButton()
+    if self.minimapButton or not Minimap then
+        return
+    end
+
+    local settings = ns.db.settings
+    settings.minimap = settings.minimap or {}
+    if settings.minimap.show == nil then
+        settings.minimap.show = true
+    end
+    settings.minimap.angle = settings.minimap.angle or 215
+
+    local btn = CreateFrame("Button", "WarbankValueMinimapButton", Minimap)
+    btn:SetSize(31, 31)
+    btn:SetFrameStrata("MEDIUM")
+    btn:SetFrameLevel(8)
+    btn:RegisterForClicks("LeftButtonUp")
+    btn:RegisterForDrag("LeftButton")
+    btn:SetHighlightTexture("Interface/Minimap/UI-Minimap-ZoomButton-Highlight")
+
+    local border = btn:CreateTexture(nil, "OVERLAY")
+    border:SetSize(53, 53)
+    border:SetTexture("Interface/Minimap/MiniMap-TrackingBorder")
+    border:SetPoint("TOPLEFT")
+
+    local icon = btn:CreateTexture(nil, "BACKGROUND")
+    icon:SetSize(20, 20)
+    icon:SetTexture("Interface/Icons/INV_Misc_Coin_02")
+    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    icon:SetPoint("CENTER", 0, 1)
+
+    local function UpdatePosition()
+        local angle = math.rad(settings.minimap.angle or 215)
+        btn:ClearAllPoints()
+        btn:SetPoint("CENTER", Minimap, "CENTER",
+            math.cos(angle) * MINIMAP_BUTTON_RADIUS, math.sin(angle) * MINIMAP_BUTTON_RADIUS)
+    end
+
+    local function OnDragUpdate()
+        local mx, my = Minimap:GetCenter()
+        local cx, cy = GetCursorPosition()
+        local scale = Minimap:GetEffectiveScale()
+        cx, cy = cx / scale, cy / scale
+        settings.minimap.angle = math.deg(math.atan2(cy - my, cx - mx))
+        UpdatePosition()
+    end
+
+    btn:SetScript("OnDragStart", function(button)
+        button:SetScript("OnUpdate", OnDragUpdate)
+    end)
+    btn:SetScript("OnDragStop", function(button)
+        button:SetScript("OnUpdate", nil)
+    end)
+
+    btn:SetScript("OnClick", function()
+        if UI.frame and UI.frame:IsShown() then
+            UI:Hide()
+        else
+            UI:ShowStandalone()
+        end
+    end)
+
+    btn:SetScript("OnEnter", function(button)
+        -- Refresh so the tooltip totals are current (Bags scan live anywhere).
+        if ns.Scanner and ns.Scanner.ScanSummary then
+            ns.Scanner:ScanSummary()
+        end
+
+        GameTooltip:SetOwner(button, "ANCHOR_LEFT")
+        GameTooltip:AddLine("WarbankValue", 1, 0.82, 0)
+        local scan = ns.Scanner and ns.Scanner.lastScanSummary
+        if scan then
+            local warband = scan.warband or {}
+            local bank = scan.bank or {}
+            local bags = scan.bags or {}
+            local ah = (warband.ahValue or 0) + (bank.ahValue or 0) + (bags.ahValue or 0)
+            local vendor = (warband.vendorValue or 0) + (bank.vendorValue or 0) + (bags.vendorValue or 0)
+            GameTooltip:AddDoubleLine("AH Total", FormatMoney(ah), 1, 1, 1, 1, 1, 1)
+            GameTooltip:AddDoubleLine("Vendor Total", FormatMoney(vendor), 1, 1, 1, 1, 1, 1)
+        else
+            GameTooltip:AddLine("No scan data yet", 0.6, 0.6, 0.6)
+        end
+        GameTooltip:AddLine("Click to toggle the summary panel", 0, 1, 0)
+        GameTooltip:Show()
+    end)
+    btn:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+
+    self.minimapButton = btn
+    UpdatePosition()
+    if settings.minimap.show then
+        btn:Show()
+    else
+        btn:Hide()
+    end
+end
+
+function UI:SetMinimapButtonShown(show)
+    if ns.db and ns.db.settings then
+        ns.db.settings.minimap = ns.db.settings.minimap or {}
+        ns.db.settings.minimap.show = show and true or false
+    end
+    if self.minimapButton then
+        if show then
+            self.minimapButton:Show()
+        else
+            self.minimapButton:Hide()
+        end
     end
 end
 

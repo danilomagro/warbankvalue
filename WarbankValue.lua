@@ -76,6 +76,7 @@ local function OnAddonLoaded(loadedAddonName)
         ns.Print(ns.Accent("/wbv show") .. " - show the panel with the last scan data")
         ns.Print(ns.Accent("/wbv missing") .. " - list items with no price data")
         ns.Print(ns.Accent("/wbv resetpos") .. " - reset the panel position")
+        ns.Print(ns.Accent("/wbv minimap on|off") .. " - show or hide the minimap button")
         ns.Print(ns.Accent("/wbv status"))
         ns.Print(ns.Accent("/wbv debug on|off"))
     end
@@ -114,6 +115,23 @@ local function OnAddonLoaded(loadedAddonName)
             if not (scan and scan.bankAccessible) then
                 ns.Print("Bank values will refresh when you visit your bank.")
             end
+            return
+        elseif cmd == "minimap" then
+            arg = arg:gsub("^%s+", ""):gsub("%s+$", "")
+            if arg == "on" then
+                if ns.UI and ns.UI.SetMinimapButtonShown then
+                    ns.UI:SetMinimapButtonShown(true)
+                end
+                ns.Print("Minimap button " .. ns.Accent("shown"))
+                return
+            elseif arg == "off" then
+                if ns.UI and ns.UI.SetMinimapButtonShown then
+                    ns.UI:SetMinimapButtonShown(false)
+                end
+                ns.Print("Minimap button " .. ns.Accent("hidden"))
+                return
+            end
+            ns.Print("Usage: " .. ns.Accent("/wbv minimap on|off"))
             return
         elseif cmd == "resetpos" then
             if ns.UI and ns.UI.ResetPosition then

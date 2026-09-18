@@ -18,6 +18,7 @@ WarbankValue adds a small, movable summary panel that appears whenever you open 
 - **Per-tab breakdown** — AH and vendor value for each Warband Bank tab
 - **Top 3 AH items** — the most valuable auctionable items across all storage, aggregated per item
 - **Missing prices** — count of items Auctionator has no price data for yet (shown only when > 0)
+- **Minimap button** — click to toggle the panel, hover for live AH/vendor totals, drag to reposition
 
 Soulbound and Warbound items are correctly excluded from AH valuation and counted at vendor price instead. Items with no AH price also fall back to their vendor price, so the totals always cover everything in the bank. The panel resizes to fit its content, and if Auctionator is missing a notice is shown instead of silent zeros.
 
@@ -36,6 +37,7 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 | `/wbv show` | Show the panel anywhere — Bags scan live, Bank/Warband keep the last scan |
 | `/wbv missing` | List items with no Auctionator price data |
 | `/wbv resetpos` | Reset the panel position to default |
+| `/wbv minimap on\|off` | Show or hide the minimap button |
 | `/wbv status` | Show current settings |
 | `/wbv debug on\|off` | Toggle debug output |
 
@@ -63,6 +65,7 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 - Missing Prices rows shown only when relevant, highlighted in orange
 - Notice shown when Auctionator is not installed
 - New `/wbv show` and `/wbv resetpos` commands
+- Minimap button: click toggles the panel, hover shows live totals, draggable around the minimap (`/wbv minimap on|off`)
 - Colored chat output: gold `[WBV]` prefix, accented commands, orange warnings; load message shows the version
 - Interface bumped to 12.1.0
 
