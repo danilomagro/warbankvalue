@@ -32,7 +32,7 @@ local function GetItemBindType(slotInfo)
         return slotInfo.bindType
     end
 
-    local _, _, _, _, _, _, _, _, _, _, _, _, _, bindType = GetItemInfo(slotInfo.itemLink or slotInfo.itemID)
+    local _, _, _, _, _, _, _, _, _, _, _, _, _, bindType = C_Item.GetItemInfo(slotInfo.itemLink or slotInfo.itemID)
     return bindType
 end
 
@@ -220,13 +220,13 @@ local function GetBlizzardVendorSellPrice(itemLink, itemID)
     end
 
     -- Use Blizzard item info API for vendor value (not Auctionator vendor APIs).
-    local _, _, _, _, _, _, _, _, _, _, sellPrice = GetItemInfo(itemLink or itemID)
+    local _, _, _, _, _, _, _, _, _, _, sellPrice = C_Item.GetItemInfo(itemLink or itemID)
     return sellPrice or 0
 end
 
 local function GetItemDisplayName(itemLink, itemID)
     if itemLink then
-        local name = GetItemInfo(itemLink)
+        local name = C_Item.GetItemInfo(itemLink)
         if name and name ~= "" then
             return name
         end
