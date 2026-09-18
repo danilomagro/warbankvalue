@@ -310,9 +310,10 @@ function UI:ShowStandalone()
     end
     self.frame:Show()
 
-    local last = ns.Scanner and ns.Scanner.lastScanSummary
-    if last then
-        self:UpdateSummary(last)
+    -- Rescan so the Bags section is live anywhere; bank sections fall back
+    -- to the last scan when the bank is not accessible.
+    if ns.Scanner and ns.Scanner.ScanSummary then
+        ns.Scanner:ScanSummary()
     end
 end
 

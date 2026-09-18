@@ -110,8 +110,9 @@ local function OnAddonLoaded(loadedAddonName)
             if ns.UI and ns.UI.ShowStandalone then
                 ns.UI:ShowStandalone()
             end
-            if not (ns.Scanner and ns.Scanner.lastScanSummary) then
-                ns.PrintWarn("No scan data yet - open your bank once to populate values.")
+            local scan = ns.Scanner and ns.Scanner.lastScanSummary
+            if not (scan and scan.bankAccessible) then
+                ns.Print("Bank values will refresh when you visit your bank.")
             end
             return
         elseif cmd == "resetpos" then

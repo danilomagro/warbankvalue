@@ -485,6 +485,7 @@ function Scanner:BuildSummary()
         topAHItems = {},
         missingMerged = {},
         warbandBankAvailable = false,
+        bankAccessible = false,
     }
     local topAHByItem = {}
 
@@ -520,6 +521,7 @@ function Scanner:BuildSummary()
 
     local normalBankBagIDs = self:GetNormalBankBagIDs()
     self.lastNormalBankBagIDs = normalBankBagIDs
+    summary.bankAccessible = #normalBankBagIDs > 0
     for _, bagID in ipairs(normalBankBagIDs) do
         local bagSummary = {
             bagID = bagID,
@@ -573,6 +575,52 @@ end
 
 function Scanner:ScanSummary()
     local summary = self:BuildSummary()
+    local last = self.lastScanSummary
+
+    -- Away from the bank its containers report no slots. Rather than
+    -- overwriting known values with zeros, keep the sections (and their top
+    -- items and missing lists) from the last scan that could see them.
+    if last then
+        local preserved = false
+        if not summary.warbandBankAvailable and last.warbandBankAvailable then
+            summary.warband = last.warband
+            summary.warbandBankAvailable = true
+            preserved = true
+        end
+        if not summary.bankAccessible and last.bankAccessible then
+            summary.bank = last.bank
+            summary.bankAccessible = true
+            preserved = true
+        end
+        if preserved then
+            local function IsStoredSource(source)
+                source = tostring(source or "")
+                return source == "Bank" or source:find("^Warband") ~= nil
+            end
+            for _, entry in ipairs(last.topAHItems or {}) do
+                if IsStoredSource(entry.source) then
+                    table.insert(summary.topAHItems, entry)
+                end
+            end
+            table.sort(summary.topAHItems, function(a, b)
+                return (a.value or 0) > (b.value or 0)
+            end)
+            while #summary.topAHItems > 3 do
+                table.remove(summary.topAHItems)
+            end
+            for key, entry in pairs(last.missingMerged or {}) do
+                if IsStoredSource(entry.source) and not summary.missingMerged[key] then
+                    summary.missingMerged[key] = entry
+                end
+            end
+            -- Keep the backward-compatible top-level fields in sync.
+            summary.ahValue = summary.warband.ahValue
+            summary.vendorValue = summary.warband.vendorValue
+            summary.missingPrices = summary.warband.missingPrices
+            summary.bagBreakdown = summary.warband.bagBreakdown
+        end
+    end
+
     self.lastScanSummary = summary
 
     if ns.UI and ns.UI.UpdateSummary then
