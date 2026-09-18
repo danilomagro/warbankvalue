@@ -14,6 +14,7 @@ WarbankValue adds a small, movable summary panel that appears whenever you open 
 
 - **AH value** — estimated market value via Auctionator prices
 - **Vendor value** — Blizzard sell price for bound and non-auctionable items
+- **Bags value** — AH and vendor value of your carried bags (backpack, bags, reagent bag)
 - **Per-tab breakdown** — AH and vendor value for each Warband Bank tab
 - **Top 3 AH items** — the most valuable auctionable items across all storage, aggregated per item
 - **Missing prices** — count of items Auctionator has no price data for yet (shown only when > 0)
@@ -53,6 +54,8 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 ## Changelog
 
 ### 0.2.0
+- New Bags section: AH and vendor value of the carried inventory, included in the Total
+- Bank bag IDs now derived from Enum.BagIndex (fixes the carried reagent bag being counted as a bank bag)
 - Items without an AH valuation now count at vendor price — totals always cover the whole bank
 - Top AH Items aggregated per item instead of per stack
 - Panel auto-resizes to fit its content; values right-aligned in a second column
