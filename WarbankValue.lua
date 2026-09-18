@@ -1,10 +1,31 @@
 local addonName, ns = ...
 
+-- Chat output colors (AARRGGBB).
+local COLOR_PREFIX = "|cffffd100" -- gold, to match the subject matter
+local COLOR_ACCENT = "|cff69ccf0" -- light blue for commands and keywords
+local COLOR_WARN = "|cffff8000"   -- orange for warnings
+local COLOR_DEBUG = "|cff9d9d9d"  -- gray for debug output
+local COLOR_RESET = "|r"
+
+ns.CHAT_PREFIX = COLOR_PREFIX .. "[WBV]" .. COLOR_RESET .. " "
+
+function ns.Print(msg)
+    print(ns.CHAT_PREFIX .. tostring(msg))
+end
+
+function ns.PrintWarn(msg)
+    print(ns.CHAT_PREFIX .. COLOR_WARN .. tostring(msg) .. COLOR_RESET)
+end
+
+function ns.Accent(text)
+    return COLOR_ACCENT .. tostring(text) .. COLOR_RESET
+end
+
 -- Debug flag (set true for lightweight prints while testing).
 ns.DEBUG = false
 ns.dprint = function(msg)
     if ns.DEBUG then
-        print("[WBV] " .. tostring(msg))
+        print(ns.CHAT_PREFIX .. COLOR_DEBUG .. tostring(msg) .. COLOR_RESET)
     end
 end
 
@@ -46,15 +67,17 @@ local function OnAddonLoaded(loadedAddonName)
     if not ns._didAnnounceLoaded then
         ns._didAnnounceLoaded = true
         -- One-time chat message on addon load (as requested).
-        print("[WBV] WarbankValue loaded")
+        local getMeta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+        local version = getMeta and getMeta(addonName, "Version")
+        ns.Print("WarbankValue " .. (version and (ns.Accent("v" .. version) .. " ") or "") .. "loaded")
     end
 
     local function PrintWbvHelp()
-        print("[WBV] /wbv show - show the panel with the last scan data")
-        print("[WBV] /wbv missing")
-        print("[WBV] /wbv resetpos - reset the panel position")
-        print("[WBV] /wbv status")
-        print("[WBV] /wbv debug on|off")
+        ns.Print(ns.Accent("/wbv show") .. " - show the panel with the last scan data")
+        ns.Print(ns.Accent("/wbv missing") .. " - list items with no price data")
+        ns.Print(ns.Accent("/wbv resetpos") .. " - reset the panel position")
+        ns.Print(ns.Accent("/wbv status"))
+        ns.Print(ns.Accent("/wbv debug on|off"))
     end
 
     SLASH_WARBANKVALUE1 = "/wbv"
@@ -73,37 +96,37 @@ local function OnAddonLoaded(loadedAddonName)
             if arg == "on" then
                 ns.db.settings.debug = true
                 ns.DEBUG = true
-                print("[WBV] Debug enabled")
+                ns.Print("Debug " .. ns.Accent("enabled"))
                 return
             elseif arg == "off" then
                 ns.db.settings.debug = false
                 ns.DEBUG = false
-                print("[WBV] Debug disabled")
+                ns.Print("Debug " .. ns.Accent("disabled"))
                 return
             end
-            print("[WBV] Usage: /wbv debug on|off")
+            ns.Print("Usage: " .. ns.Accent("/wbv debug on|off"))
             return
         elseif cmd == "show" then
             if ns.UI and ns.UI.ShowStandalone then
                 ns.UI:ShowStandalone()
             end
             if not (ns.Scanner and ns.Scanner.lastScanSummary) then
-                print("[WBV] No scan data yet - open your bank once to populate values.")
+                ns.PrintWarn("No scan data yet - open your bank once to populate values.")
             end
             return
         elseif cmd == "resetpos" then
             if ns.UI and ns.UI.ResetPosition then
                 ns.UI:ResetPosition()
             end
-            print("[WBV] Panel position reset to default.")
+            ns.Print("Panel position reset to default.")
             return
         elseif cmd == "status" then
-            print("[WBV] debug = " .. tostring(ns.db.settings.debug))
+            ns.Print("debug = " .. ns.Accent(tostring(ns.db.settings.debug)))
             return
         elseif cmd == "missing" then
             local scan = ns.Scanner and ns.Scanner.lastScanSummary
             if not scan or not scan.missingMerged then
-                print("[WBV] No scan data yet. Open the bank to refresh.")
+                ns.PrintWarn("No scan data yet. Open the bank to refresh.")
                 return
             end
             local list = {}
@@ -111,7 +134,7 @@ local function OnAddonLoaded(loadedAddonName)
                 table.insert(list, entry)
             end
             if #list == 0 then
-                print("[WBV] No missing-price items in the last scan.")
+                ns.Print("No missing-price items in the last scan.")
                 return
             end
             table.sort(list, function(a, b)
@@ -122,7 +145,7 @@ local function OnAddonLoaded(loadedAddonName)
                 return tostring(a.name or "") < tostring(b.name or "")
             end)
             for _, entry in ipairs(list) do
-                print("[WBV] [" .. tostring(entry.source or "?") .. "] " .. tostring(entry.name or "?") .. " x" .. tostring(entry.count or 0))
+                ns.Print(ns.Accent("[" .. tostring(entry.source or "?") .. "]") .. " " .. tostring(entry.name or "?") .. " x" .. tostring(entry.count or 0))
             end
             return
         end
