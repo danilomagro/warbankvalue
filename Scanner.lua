@@ -266,7 +266,7 @@ function Scanner:GetNormalBankBagIDs()
 end
 
 function Scanner:DebugAccountBankBags(forcePrint)
-    local printer = (forcePrint and print) or ns.dprint
+    local printer = (forcePrint and ns.Print) or ns.dprint
     if not printer then
         return
     end
@@ -292,7 +292,7 @@ function Scanner:DebugAccountBankBags(forcePrint)
             end
         end
 
-        printer("[WBV] bag " .. tostring(bagID) .. ": slots=" .. tostring(slotCount) .. " occupied=" .. tostring(occupied) .. " firstItem=" .. tostring(firstItem))
+        printer("bag " .. tostring(bagID) .. ": slots=" .. tostring(slotCount) .. " occupied=" .. tostring(occupied) .. " firstItem=" .. tostring(firstItem))
     end
 end
 
