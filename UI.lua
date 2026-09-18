@@ -141,9 +141,18 @@ function UI:Initialize()
     f.entryBankMissing.anchor:SetTextColor(1, 0.55, 0)
     f.entryBankMissing.valueFS:SetTextColor(1, 0.55, 0)
 
+    f.entrySepBags = AddSeparator()
+
+    f.entryBagsHeader = AddHeader("Bags", 3)
+    f.entryBagsAH = AddStatRow("AH Total")
+    f.entryBagsVendor = AddStatRow("Vendor Total")
+    f.entryBagsMissing = AddStatRow("Missing Prices")
+    f.entryBagsMissing.anchor:SetTextColor(1, 0.55, 0)
+    f.entryBagsMissing.valueFS:SetTextColor(1, 0.55, 0)
+
     f.entrySep2 = AddSeparator()
 
-    f.entryTotalHeader = AddHeader("Total (Warband + Bank)", 3)
+    f.entryTotalHeader = AddHeader("Total", 3)
     f.entryTotalAH = AddStatRow("AH Total")
     f.entryTotalVendor = AddStatRow("Vendor Total")
 
@@ -159,6 +168,7 @@ function UI:Initialize()
     f.entryNotice.visible = false
     f.entryWarbandMissing.visible = false
     f.entryBankMissing.visible = false
+    f.entryBagsMissing.visible = false
     f.entrySep3.visible = false
     f.entryTopHeader.visible = false
     for i = 1, #f.bagEntries do
@@ -330,6 +340,7 @@ function UI:UpdateSummary(summary)
     summary = summary or {}
     local warband = summary.warband or summary
     local bank = summary.bank or {}
+    local bags = summary.bags or {}
     local f = self.frame
 
     f.entryNotice.visible = summary.auctionatorAvailable == false
@@ -359,8 +370,14 @@ function UI:UpdateSummary(summary)
     f.entryBankMissing.visible = bankMissing > 0
     f.entryBankMissing.valueFS:SetText(tostring(bankMissing))
 
-    f.entryTotalAH.valueFS:SetText(FormatMoney((warband.ahValue or 0) + (bank.ahValue or 0)))
-    f.entryTotalVendor.valueFS:SetText(FormatMoney((warband.vendorValue or 0) + (bank.vendorValue or 0)))
+    f.entryBagsAH.valueFS:SetText(FormatMoney(bags.ahValue or 0))
+    f.entryBagsVendor.valueFS:SetText(FormatMoney(bags.vendorValue or 0))
+    local bagsMissing = bags.missingPrices or 0
+    f.entryBagsMissing.visible = bagsMissing > 0
+    f.entryBagsMissing.valueFS:SetText(tostring(bagsMissing))
+
+    f.entryTotalAH.valueFS:SetText(FormatMoney((warband.ahValue or 0) + (bank.ahValue or 0) + (bags.ahValue or 0)))
+    f.entryTotalVendor.valueFS:SetText(FormatMoney((warband.vendorValue or 0) + (bank.vendorValue or 0) + (bags.vendorValue or 0)))
 
     local breakdown = warband.bagBreakdown or summary.bagBreakdown or {}
     for i = 1, #f.bagEntries do

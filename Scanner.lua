@@ -10,10 +10,54 @@ local ACCOUNT_BANK_BAG_IDS = {
     Enum.BagIndex and Enum.BagIndex.AccountBankTab_4 or 15,
     Enum.BagIndex and Enum.BagIndex.AccountBankTab_5 or 16,
 }
-local NORMAL_BANK_BAG_CANDIDATES = {
-    Enum.BagIndex and Enum.BagIndex.Bank or -1, -- Main bank container
-    5, 6, 7, 8, 9, 10, 11, -- Equipped bank bag slots
-}
+-- Carried inventory: backpack, the four bags, and the reagent bag where it exists.
+local INVENTORY_BAG_IDS = {}
+do
+    local function add(id)
+        if id ~= nil then
+            table.insert(INVENTORY_BAG_IDS, id)
+        end
+    end
+    add(Enum.BagIndex and Enum.BagIndex.Backpack or 0)
+    for i = 1, 4 do
+        add((Enum.BagIndex and Enum.BagIndex["Bag_" .. i]) or i)
+    end
+    add(Enum.BagIndex and Enum.BagIndex.ReagentBag)
+end
+
+-- Bank containers, derived from Enum.BagIndex when available. The historical
+-- raw IDs 5-11 are only a last resort: on modern clients bag 5 is the carried
+-- reagent bag, and bank bags start at 6.
+local NORMAL_BANK_BAG_CANDIDATES = {}
+do
+    local inventorySet = {}
+    for _, id in ipairs(INVENTORY_BAG_IDS) do
+        inventorySet[id] = true
+    end
+
+    local seen = {}
+    local function add(id)
+        if id ~= nil and not seen[id] and not inventorySet[id] then
+            seen[id] = true
+            table.insert(NORMAL_BANK_BAG_CANDIDATES, id)
+        end
+    end
+
+    add(Enum.BagIndex and Enum.BagIndex.Bank or -1) -- Main bank container
+    if Enum.BagIndex then
+        for i = 1, 7 do
+            add(Enum.BagIndex["BankBag_" .. i])
+        end
+        for i = 1, 6 do
+            add(Enum.BagIndex["CharacterBankTab_" .. i])
+        end
+    end
+    if #NORMAL_BANK_BAG_CANDIDATES <= 1 then
+        for id = 5, 11 do
+            add(id)
+        end
+    end
+end
 
 local pendingItemIDs = {}
 
@@ -433,6 +477,11 @@ function Scanner:BuildSummary()
             vendorValue = 0,
             missingPrices = 0,
         },
+        bags = {
+            ahValue = 0,
+            vendorValue = 0,
+            missingPrices = 0,
+        },
         topAHItems = {},
         missingMerged = {},
         warbandBankAvailable = false,
@@ -484,12 +533,26 @@ function Scanner:BuildSummary()
         end
     end
 
-    for _, entry in pairs(topAHByItem) do
-        if entry.sources["Warband"] and entry.sources["Bank"] then
-            entry.source = "Both"
-        else
-            entry.source = next(entry.sources) or "?"
+    for _, bagID in ipairs(INVENTORY_BAG_IDS) do
+        local bagSummary = {
+            bagID = bagID,
+            ahValue = 0,
+            vendorValue = 0,
+            missingPrices = 0,
+            occupiedSlots = 0,
+        }
+        for slotInfo in self:IterateBagSlots(bagID) do
+            self:AccumulateBagSummary(summary, summary.bags, bagSummary, slotInfo, "Bags", topAHByItem, summary.missingMerged)
         end
+    end
+
+    for _, entry in pairs(topAHByItem) do
+        local firstSource, sourceCount = nil, 0
+        for source in pairs(entry.sources) do
+            sourceCount = sourceCount + 1
+            firstSource = firstSource or source
+        end
+        entry.source = (sourceCount > 1) and "Multi" or (firstSource or "?")
         table.insert(summary.topAHItems, entry)
     end
     table.sort(summary.topAHItems, function(a, b)
