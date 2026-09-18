@@ -63,6 +63,7 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 - Missing Prices rows shown only when relevant, highlighted in orange
 - Notice shown when Auctionator is not installed
 - New `/wbv show` and `/wbv resetpos` commands
+- Colored chat output: gold `[WBV]` prefix, accented commands, orange warnings; load message shows the version
 - Interface bumped to 12.1.0
 
 ### 0.1.0
