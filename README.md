@@ -58,6 +58,7 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 ### 0.2.0
 - New Bags section: AH and vendor value of the carried inventory, included in the Total
 - `/wbv show` now rescans on open: Bags are always live; Bank/Warband keep the last scan when the bank is out of reach
+- Bank and Warband sections appear only once a scan has actually seen them, and keep their values after you leave the bank
 - Bank bag IDs now derived from Enum.BagIndex (fixes the carried reagent bag being counted as a bank bag)
 - Items without an AH valuation now count at vendor price — totals always cover the whole bank
 - Top AH Items aggregated per item instead of per stack

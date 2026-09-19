@@ -486,52 +486,60 @@ function Scanner:BuildSummary()
         missingMerged = {},
         warbandBankAvailable = false,
         bankAccessible = false,
+        storageScanned = false,
     }
     local topAHByItem = {}
 
-    -- On clients without an account bank (e.g. WoW: Forever) these bags have
-    -- no slots; the UI hides the Warband section entirely in that case.
-    for _, bagID in ipairs(ACCOUNT_BANK_BAG_IDS) do
-        if (C_Container.GetContainerNumSlots(bagID) or 0) > 0 then
-            summary.warbandBankAvailable = true
-            break
-        end
-    end
+    -- Bank and Warband containers only hold readable items while the bank is
+    -- open: away from it they still report their slot count, but every slot
+    -- comes back empty. Scanning them then would zero out known values, so
+    -- ScanSummary preserves the previous numbers instead.
+    summary.storageScanned = ns.bankIsOpen == true
 
-
-    for _, bagID in ipairs(ACCOUNT_BANK_BAG_IDS) do
-        local bagSummary = {
-            bagID = bagID,
-            tabIndex = BagIDToTabIndex(bagID),
-            ahValue = 0,
-            vendorValue = 0,
-            missingPrices = 0,
-            occupiedSlots = 0,
-        }
-
-        for slotInfo in self:IterateBagSlots(bagID) do
-            local sourceLabel = bagSummary.tabIndex and ("Warband Tab " .. tostring(bagSummary.tabIndex)) or "Warband"
-            self:AccumulateBagSummary(summary, summary.warband, bagSummary, slotInfo, sourceLabel, topAHByItem, summary.missingMerged)
+    if summary.storageScanned then
+        -- On clients without an account bank (e.g. WoW: Forever) these bags have
+        -- no slots; the UI hides the Warband section entirely in that case.
+        for _, bagID in ipairs(ACCOUNT_BANK_BAG_IDS) do
+            if (C_Container.GetContainerNumSlots(bagID) or 0) > 0 then
+                summary.warbandBankAvailable = true
+                break
+            end
         end
 
-        if bagSummary.occupiedSlots > 0 then
-            table.insert(summary.warband.bagBreakdown, bagSummary)
-        end
-    end
+        for _, bagID in ipairs(ACCOUNT_BANK_BAG_IDS) do
+            local bagSummary = {
+                bagID = bagID,
+                tabIndex = BagIDToTabIndex(bagID),
+                ahValue = 0,
+                vendorValue = 0,
+                missingPrices = 0,
+                occupiedSlots = 0,
+            }
 
-    local normalBankBagIDs = self:GetNormalBankBagIDs()
-    self.lastNormalBankBagIDs = normalBankBagIDs
-    summary.bankAccessible = #normalBankBagIDs > 0
-    for _, bagID in ipairs(normalBankBagIDs) do
-        local bagSummary = {
-            bagID = bagID,
-            ahValue = 0,
-            vendorValue = 0,
-            missingPrices = 0,
-            occupiedSlots = 0,
-        }
-        for slotInfo in self:IterateBagSlots(bagID) do
-            self:AccumulateBagSummary(summary, summary.bank, bagSummary, slotInfo, "Bank", topAHByItem, summary.missingMerged)
+            for slotInfo in self:IterateBagSlots(bagID) do
+                local sourceLabel = bagSummary.tabIndex and ("Warband Tab " .. tostring(bagSummary.tabIndex)) or "Warband"
+                self:AccumulateBagSummary(summary, summary.warband, bagSummary, slotInfo, sourceLabel, topAHByItem, summary.missingMerged)
+            end
+
+            if bagSummary.occupiedSlots > 0 then
+                table.insert(summary.warband.bagBreakdown, bagSummary)
+            end
+        end
+
+        local normalBankBagIDs = self:GetNormalBankBagIDs()
+        self.lastNormalBankBagIDs = normalBankBagIDs
+        summary.bankAccessible = #normalBankBagIDs > 0
+        for _, bagID in ipairs(normalBankBagIDs) do
+            local bagSummary = {
+                bagID = bagID,
+                ahValue = 0,
+                vendorValue = 0,
+                missingPrices = 0,
+                occupiedSlots = 0,
+            }
+            for slotInfo in self:IterateBagSlots(bagID) do
+                self:AccumulateBagSummary(summary, summary.bank, bagSummary, slotInfo, "Bank", topAHByItem, summary.missingMerged)
+            end
         end
     end
 
@@ -577,48 +585,40 @@ function Scanner:ScanSummary()
     local summary = self:BuildSummary()
     local last = self.lastScanSummary
 
-    -- Away from the bank its containers report no slots. Rather than
-    -- overwriting known values with zeros, keep the sections (and their top
-    -- items and missing lists) from the last scan that could see them.
-    if last then
-        local preserved = false
-        if not summary.warbandBankAvailable and last.warbandBankAvailable then
-            summary.warband = last.warband
-            summary.warbandBankAvailable = true
-            preserved = true
+    -- Only a scan taken with the bank open can read stored items. Otherwise
+    -- carry the stored sections (with their top items and missing entries)
+    -- over from the last scan that could, instead of zeroing them.
+    if not summary.storageScanned and last then
+        summary.warband = last.warband
+        summary.bank = last.bank
+        summary.warbandBankAvailable = last.warbandBankAvailable
+        summary.bankAccessible = last.bankAccessible
+
+        local function IsStoredSource(source)
+            source = tostring(source or "")
+            return source == "Bank" or source:find("^Warband") ~= nil or source == "Multi"
         end
-        if not summary.bankAccessible and last.bankAccessible then
-            summary.bank = last.bank
-            summary.bankAccessible = true
-            preserved = true
+        for _, entry in ipairs(last.topAHItems or {}) do
+            if IsStoredSource(entry.source) then
+                table.insert(summary.topAHItems, entry)
+            end
         end
-        if preserved then
-            local function IsStoredSource(source)
-                source = tostring(source or "")
-                return source == "Bank" or source:find("^Warband") ~= nil
-            end
-            for _, entry in ipairs(last.topAHItems or {}) do
-                if IsStoredSource(entry.source) then
-                    table.insert(summary.topAHItems, entry)
-                end
-            end
-            table.sort(summary.topAHItems, function(a, b)
-                return (a.value or 0) > (b.value or 0)
-            end)
-            while #summary.topAHItems > 3 do
-                table.remove(summary.topAHItems)
-            end
-            for key, entry in pairs(last.missingMerged or {}) do
-                if IsStoredSource(entry.source) and not summary.missingMerged[key] then
-                    summary.missingMerged[key] = entry
-                end
-            end
-            -- Keep the backward-compatible top-level fields in sync.
-            summary.ahValue = summary.warband.ahValue
-            summary.vendorValue = summary.warband.vendorValue
-            summary.missingPrices = summary.warband.missingPrices
-            summary.bagBreakdown = summary.warband.bagBreakdown
+        table.sort(summary.topAHItems, function(a, b)
+            return (a.value or 0) > (b.value or 0)
+        end)
+        while #summary.topAHItems > 3 do
+            table.remove(summary.topAHItems)
         end
+        for key, entry in pairs(last.missingMerged or {}) do
+            if IsStoredSource(entry.source) and not summary.missingMerged[key] then
+                summary.missingMerged[key] = entry
+            end
+        end
+        -- Keep the backward-compatible top-level fields in sync.
+        summary.ahValue = summary.warband.ahValue
+        summary.vendorValue = summary.warband.vendorValue
+        summary.missingPrices = summary.warband.missingPrices
+        summary.bagBreakdown = summary.warband.bagBreakdown
     end
 
     self.lastScanSummary = summary

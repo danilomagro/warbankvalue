@@ -177,6 +177,7 @@ local function OnBankFrameOpened()
     if ns.dprint then
         ns.dprint("BANKFRAME_OPENED")
     end
+    ns.bankIsOpen = true
     if ns.UI and ns.UI.Show then
         ns.UI:Show()
     end
@@ -191,6 +192,7 @@ local function OnBankFrameClosed()
     if ns.dprint then
         ns.dprint("BANKFRAME_CLOSED")
     end
+    ns.bankIsOpen = false
     if ns.UI and ns.UI.Hide then
         ns.UI:Hide()
     end
