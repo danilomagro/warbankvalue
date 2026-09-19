@@ -321,22 +321,34 @@ end
 function UI:ResetPosition()
     if ns.db and ns.db.settings then
         ns.db.settings.framePos = nil
+        if ns.db.settings.minimap then
+            ns.db.settings.minimap.angle = nil
+            ns.db.settings.minimap.radius = nil
+        end
     end
     if self.frame and self.frame:IsShown() then
         self.frame:ClearAllPoints()
         self.frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", DEFAULT_POSITION.x, DEFAULT_POSITION.y)
     end
+    if self.UpdateMinimapButtonPosition then
+        self:UpdateMinimapButtonPosition()
+    end
 end
 
--- Distance from the minimap centre to the button: derived from the minimap's
--- own size so the button sits just outside the ring whatever its size (the
--- usual 80 for a default 140px minimap, more when an addon enlarges it).
-local function GetMinimapRingRadius()
+-- Distance from the minimap centre to the button. The frame's own size only
+-- gives a starting point: Classic-style minimap art (WoW: Forever) draws a
+-- decorative border beyond the frame, so the default can still land on it.
+-- Dragging the button adjusts the distance as well as the angle.
+local function GetMinimapFrameRadius()
     local width = (Minimap and Minimap:GetWidth()) or 140
     if width <= 0 then
         width = 140
     end
-    return (width / 2) + 10
+    return width / 2
+end
+
+local function GetDefaultMinimapRadius()
+    return GetMinimapFrameRadius() + 10
 end
 
 function UI:InitializeMinimapButton()
@@ -372,7 +384,7 @@ function UI:InitializeMinimapButton()
 
     local function UpdatePosition()
         local angle = math.rad(settings.minimap.angle or 215)
-        local radius = GetMinimapRingRadius()
+        local radius = settings.minimap.radius or GetDefaultMinimapRadius()
         btn:ClearAllPoints()
         btn:SetPoint("CENTER", Minimap, "CENTER",
             math.cos(angle) * radius, math.sin(angle) * radius)
@@ -390,7 +402,16 @@ function UI:InitializeMinimapButton()
         local cx, cy = GetCursorPosition()
         local scale = Minimap:GetEffectiveScale()
         cx, cy = cx / scale, cy / scale
-        settings.minimap.angle = math.deg(Atan2(cy - my, cx - mx))
+        local dx, dy = cx - mx, cy - my
+
+        settings.minimap.angle = math.deg(Atan2(dy, dx))
+
+        -- Follow the cursor outwards too, so the button clears whatever
+        -- border art this client draws; keep it near the minimap though.
+        local frameRadius = GetMinimapFrameRadius()
+        local radius = math.sqrt(dx * dx + dy * dy)
+        settings.minimap.radius = math.max(frameRadius * 0.6, math.min(radius, frameRadius + 60))
+
         UpdatePosition()
     end
 
