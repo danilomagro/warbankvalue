@@ -430,6 +430,8 @@ function Scanner:AccumulateBagSummary(rootSummary, sectionSummary, bagSummary, s
                 if not entry then
                     entry = {
                         name = GetItemDisplayName(slotInfo.itemLink, slotInfo.itemID),
+                        itemLink = slotInfo.itemLink,
+                        itemID = slotInfo.itemID,
                         value = 0,
                         sources = {},
                     }

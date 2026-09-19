@@ -16,6 +16,25 @@ local function FormatMoney(copper)
     return GetMoneyString(amount, true)
 end
 
+-- Wrap an item name in its quality color, as the game does everywhere else.
+local function ColorizeItemName(item)
+    local name = tostring(item.name or "Unknown")
+    local getItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+    local quality
+    if C_Item and C_Item.GetItemQualityByID and item.itemID then
+        quality = C_Item.GetItemQualityByID(item.itemID)
+    end
+    if not quality and getItemInfo and (item.itemLink or item.itemID) then
+        quality = select(3, getItemInfo(item.itemLink or item.itemID))
+    end
+
+    local color = quality and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality]
+    if color and color.hex then
+        return color.hex .. name .. "|r"
+    end
+    return name
+end
+
 local function FormatBagBreakdownLine(bagSummary)
     local label = bagSummary.tabIndex and ("Tab " .. tostring(bagSummary.tabIndex)) or ("Bag " .. tostring(bagSummary.bagID))
     return label .. ": AH " .. FormatMoney(bagSummary.ahValue or 0)
@@ -161,7 +180,37 @@ function UI:Initialize()
     f.entryTopHeader = AddHeader("Top AH Items", 3)
     f.topAHEntries = {}
     for i = 1, 3 do
-        f.topAHEntries[i] = AddTextLine(i == 1 and 3 or 2)
+        local entry = AddTextLine(i == 1 and 3 or 2)
+        -- A fixed width lets the engine ellipsize long item names instead of
+        -- letting them run past the panel.
+        entry.anchor:SetWidth(FRAME_WIDTH - 24)
+        entry.anchor:SetWordWrap(false)
+        entry.anchor:SetJustifyH("LEFT")
+
+        -- FontStrings take no mouse input, so an invisible frame on top of
+        -- the line provides the hover area for the item tooltip.
+        local hover = CreateFrame("Frame", nil, f)
+        hover:SetAllPoints(entry.anchor)
+        hover:EnableMouse(true)
+        hover:SetScript("OnEnter", function(self)
+            if not self.itemLink and not self.itemID then
+                return
+            end
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            if self.itemLink then
+                GameTooltip:SetHyperlink(self.itemLink)
+            else
+                GameTooltip:SetItemByID(self.itemID)
+            end
+            GameTooltip:Show()
+        end)
+        hover:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+        entry.hover = hover
+        table.insert(entry.parts, hover)
+
+        f.topAHEntries[i] = entry
     end
 
     -- Conditional entries start hidden until the first scan fills them in.
@@ -566,10 +615,15 @@ function UI:UpdateSummary(summary)
         local entry = f.topAHEntries[i]
         local item = topAHItems[i]
         if item then
-            entry.anchor:SetText(tostring(i) .. ". [" .. tostring(item.source or "?") .. "] " .. tostring(item.name or "Unknown") .. " - " .. FormatMoney(item.value or 0))
+            entry.anchor:SetText(tostring(i) .. ". [" .. tostring(item.source or "?") .. "] "
+                .. ColorizeItemName(item) .. " - " .. FormatMoney(item.value or 0))
+            entry.hover.itemLink = item.itemLink
+            entry.hover.itemID = item.itemID
             entry.visible = true
         else
             entry.anchor:SetText("")
+            entry.hover.itemLink = nil
+            entry.hover.itemID = nil
             entry.visible = false
         end
     end
