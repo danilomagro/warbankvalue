@@ -328,7 +328,16 @@ function UI:ResetPosition()
     end
 end
 
-local MINIMAP_BUTTON_RADIUS = 80
+-- Distance from the minimap centre to the button: derived from the minimap's
+-- own size so the button sits just outside the ring whatever its size (the
+-- usual 80 for a default 140px minimap, more when an addon enlarges it).
+local function GetMinimapRingRadius()
+    local width = (Minimap and Minimap:GetWidth()) or 140
+    if width <= 0 then
+        width = 140
+    end
+    return (width / 2) + 10
+end
 
 function UI:InitializeMinimapButton()
     if self.minimapButton or not Minimap then
@@ -363,17 +372,25 @@ function UI:InitializeMinimapButton()
 
     local function UpdatePosition()
         local angle = math.rad(settings.minimap.angle or 215)
+        local radius = GetMinimapRingRadius()
         btn:ClearAllPoints()
         btn:SetPoint("CENTER", Minimap, "CENTER",
-            math.cos(angle) * MINIMAP_BUTTON_RADIUS, math.sin(angle) * MINIMAP_BUTTON_RADIUS)
+            math.cos(angle) * radius, math.sin(angle) * radius)
+    end
+    self.UpdateMinimapButtonPosition = UpdatePosition
+
+    -- An addon may resize the minimap after us (Leatrix Plus and friends do).
+    if Minimap.HookScript then
+        Minimap:HookScript("OnSizeChanged", UpdatePosition)
     end
 
+    local Atan2 = math.atan2 or math.atan
     local function OnDragUpdate()
         local mx, my = Minimap:GetCenter()
         local cx, cy = GetCursorPosition()
         local scale = Minimap:GetEffectiveScale()
         cx, cy = cx / scale, cy / scale
-        settings.minimap.angle = math.deg(math.atan2(cy - my, cx - mx))
+        settings.minimap.angle = math.deg(Atan2(cy - my, cx - mx))
         UpdatePosition()
     end
 
@@ -466,14 +483,28 @@ function UI:UpdateSummary(summary)
 
     f.entryNotice.visible = summary.auctionatorAvailable == false
 
-    -- Clients without an account bank (e.g. WoW: Forever) get no Warband
-    -- section; the Total still sums Bank + Bags.
-    local hasWarband = summary.warbandBankAvailable ~= false
+    -- Stored sections appear only once a scan with the bank open has seen
+    -- them. Before that (and on clients with no account bank, e.g. WoW:
+    -- Forever) showing zeros would claim the storage is empty. Each section
+    -- carries the separator that follows it, so no stray lines are left.
+    local hasWarband = summary.warbandBankAvailable == true
+    local hasBank = summary.bankAccessible == true
+    local hasTotal = hasWarband or hasBank
 
     f.entryWarbandHeader.visible = hasWarband
     f.entryWarbandAH.visible = hasWarband
     f.entryWarbandVendor.visible = hasWarband
     f.entrySep1.visible = hasWarband
+
+    f.entryBankHeader.visible = hasBank
+    f.entryBankAH.visible = hasBank
+    f.entryBankVendor.visible = hasBank
+    f.entrySepBags.visible = hasBank
+
+    f.entrySep2.visible = hasTotal
+    f.entryTotalHeader.visible = hasTotal
+    f.entryTotalAH.visible = hasTotal
+    f.entryTotalVendor.visible = hasTotal
 
     f.entryWarbandAH.valueFS:SetText(FormatMoney(warband.ahValue or 0))
     f.entryWarbandVendor.valueFS:SetText(FormatMoney(warband.vendorValue or 0))
@@ -484,7 +515,7 @@ function UI:UpdateSummary(summary)
     f.entryBankAH.valueFS:SetText(FormatMoney(bank.ahValue or 0))
     f.entryBankVendor.valueFS:SetText(FormatMoney(bank.vendorValue or 0))
     local bankMissing = bank.missingPrices or 0
-    f.entryBankMissing.visible = bankMissing > 0
+    f.entryBankMissing.visible = hasBank and bankMissing > 0
     f.entryBankMissing.valueFS:SetText(tostring(bankMissing))
 
     f.entryBagsAH.valueFS:SetText(FormatMoney(bags.ahValue or 0))
@@ -499,7 +530,7 @@ function UI:UpdateSummary(summary)
     local breakdown = warband.bagBreakdown or summary.bagBreakdown or {}
     for i = 1, #f.bagEntries do
         local entry = f.bagEntries[i]
-        local bagSummary = breakdown[i]
+        local bagSummary = hasWarband and breakdown[i] or nil
         if bagSummary then
             entry.anchor:SetText(FormatBagBreakdownLine(bagSummary))
             entry.visible = true
