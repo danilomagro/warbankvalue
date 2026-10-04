@@ -8,7 +8,9 @@
 # never mix the two within the Forever flavor: a single Release file would
 # take precedence over newer Betas for users on default app settings.
 #
-# Tags have no "v" so the CurseForge file is named "WarbankValue 0.2.1-beta1".
+# Tags have no "v" so the CurseForge file is named "WarbankValue-0.2.1-beta1".
+# The packager turns anything but letters, digits and . _ ! - into "_", spaces
+# included, so the label cannot read "WarbankValue 0.2.1-beta1".
 #
 # "-g forever" uploads for WoW: Forever only (1.60.1). The packager checks the
 # base WarbankValue.toc for a matching interface, so it lists 16001 next to
@@ -43,4 +45,4 @@ jobs:
 
       - uses: BigWigsMods/packager@v2
         with:
-          args: '-g forever -n "{package-name}-{project-version}:{package-name} {project-version}"'
+          args: '-g forever -n "{package-name}-{project-version}:{package-name}-{project-version}"'
