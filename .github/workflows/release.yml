@@ -1,8 +1,9 @@
 # Packages the addon and publishes it whenever a version tag is pushed:
 #   git tag v0.2.0 && git push origin v0.2.0
 #
-# "-g forever" uploads for WoW: Forever only (1.60.1, from
-# WarbankValue_Camelot.toc). Retail stays on the last file uploaded for it
+# "-g forever" uploads for WoW: Forever only (1.60.1). The packager checks the
+# base WarbankValue.toc for a matching interface, so it lists 16001 next to
+# 120100; the Forever client itself still loads WarbankValue_Camelot.toc. Retail stays on the last file uploaded for it
 # until a Retail build has been tested again; drop the args line then and the
 # packager will tag one zip for both flavors, reading both TOC files.
 #
