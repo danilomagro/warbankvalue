@@ -35,7 +35,6 @@ WarbankValue runs on both games, each loading its own TOC file. WoW: Forever has
 | Warband Bank, per-tab breakdown | Yes | No - the game has no Warband Bank |
 | Latest file on CurseForge | 0.1.0 (0.2.0 once tested on Retail) | 0.2.0 |
 
-On the WoW: Forever beta the client does not load saved settings yet, so the panel position and options reset at every launch. That is a client bug and goes away once Blizzard fixes it.
 
 ## Installation
 
@@ -58,7 +57,7 @@ On the WoW: Forever beta the client does not load saved settings yet, so the pan
 
 ## Notes
 
-- The panel is **draggable** — position is saved between sessions (see the WoW: Forever note above)
+- The panel is **draggable** — position is saved between sessions
 - AH prices reflect Auctionator's local scan data; run an Auctionator scan for best accuracy
 - Items with no price data are counted as "missing" and listed via `/wbv missing`
 - Async item data loading is handled gracefully — the panel refreshes automatically when data arrives
