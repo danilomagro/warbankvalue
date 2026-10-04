@@ -26,6 +26,8 @@ Soulbound items (and, on Retail, Warbound items) are correctly excluded from AH 
 
 WarbankValue runs on both games, each loading its own TOC file. WoW: Forever has no Warband Bank, so there the panel covers your bank and bags, and the Warband section simply does not appear.
 
+![WarbankValue on WoW: Forever](assets/screenshot_forever.png)
+
 | | Retail | WoW: Forever |
 |---|---|---|
 | Regular Bank | Yes | Yes |
