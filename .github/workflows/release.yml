@@ -8,6 +8,10 @@
 # never mix the two within the Forever flavor: a single Release file would
 # take precedence over newer Betas for users on default app settings.
 #
+# Before tagging, rename CHANGELOG.md's "Unreleased" heading to the version:
+# .pkgmeta hands that file to CurseForge as the file's changelog, in place of
+# a list of commit messages.
+#
 # Tags have no "v" so the CurseForge file is named "WarbankValue-0.2.1-beta1".
 # The packager turns anything but letters, digits and . _ ! - into "_", spaces
 # included, so the label cannot read "WarbankValue 0.2.1-beta1".
