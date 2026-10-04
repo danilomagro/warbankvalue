@@ -400,6 +400,19 @@ local function GetDefaultMinimapRadius()
     return GetMinimapFrameRadius() + 10
 end
 
+-- Fireside, the sibling addon, sits at nine o'clock (180 degrees, angles grow
+-- anticlockwise from three o'clock). WarbankValue goes right below it, rings
+-- touching: the step is the angle that spans one button width on the ring,
+-- so it follows the real minimap size (Forever's is larger than Retail's).
+local FIRESIDE_ANGLE = 180
+local BUTTON_SPAN = 34
+
+local function GetDefaultMinimapAngle()
+    local radius = GetDefaultMinimapRadius()
+    local half = math.min(1, (BUTTON_SPAN / 2) / radius)
+    return FIRESIDE_ANGLE + math.deg(2 * math.asin(half))
+end
+
 function UI:InitializeMinimapButton()
     if self.minimapButton or not Minimap then
         return
@@ -410,7 +423,6 @@ function UI:InitializeMinimapButton()
     if settings.minimap.show == nil then
         settings.minimap.show = true
     end
-    settings.minimap.angle = settings.minimap.angle or 215
 
     local btn = CreateFrame("Button", "WarbankValueMinimapButton", Minimap)
     btn:SetSize(31, 31)
@@ -432,7 +444,7 @@ function UI:InitializeMinimapButton()
     icon:SetPoint("CENTER", 0, 1)
 
     local function UpdatePosition()
-        local angle = math.rad(settings.minimap.angle or 215)
+        local angle = math.rad(settings.minimap.angle or GetDefaultMinimapAngle())
         local radius = settings.minimap.radius or GetDefaultMinimapRadius()
         btn:ClearAllPoints()
         btn:SetPoint("CENTER", Minimap, "CENTER",
