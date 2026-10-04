@@ -1,17 +1,21 @@
 # Packages the addon and publishes it whenever a version tag is pushed:
-#   git tag 0.2.1 && git push origin 0.2.1
+#   git tag 0.2.1-beta1 && git push origin 0.2.1-beta1
 #
-# Tags have no "v" so the CurseForge file is named "WarbankValue 0.2.1", like
-# the files uploaded by hand. The packager derives the file type from the tag:
-# "beta" or "alpha" in it makes a Beta or Alpha file, which the CurseForge app
-# only delivers to users who opted in to those - plain version tags give a
-# Release. The -n template also keeps "-forever" out of the file name.
+# Release policy: every file stays Beta while WoW: Forever is in beta, so tag
+# 0.2.1-beta1, 0.2.1-beta2, ... The packager derives the file type from the
+# tag: "beta" in it makes a Beta file. A plain tag (1.0.0) makes a Release -
+# use one only once Forever has launched and the features are verified, and
+# never mix the two within the Forever flavor: a single Release file would
+# take precedence over newer Betas for users on default app settings.
+#
+# Tags have no "v" so the CurseForge file is named "WarbankValue 0.2.1-beta1".
 #
 # "-g forever" uploads for WoW: Forever only (1.60.1). The packager checks the
 # base WarbankValue.toc for a matching interface, so it lists 16001 next to
-# 120100; the Forever client itself still loads WarbankValue_Camelot.toc. Retail stays on the last file uploaded for it
-# until a Retail build has been tested again; drop the args line then and the
-# packager will tag one zip for both flavors, reading both TOC files.
+# 120100; the Forever client itself still loads WarbankValue_Camelot.toc.
+# Retail stays on the last file uploaded for it until a Retail build has been
+# tested again; drop "-g forever" then and the packager will tag one zip for
+# both flavors, reading both TOC files.
 #
 # The CurseForge upload needs "## X-Curse-Project-ID" in the TOC files and a
 # CF_API_KEY repository secret (Settings > Secrets and variables > Actions).
