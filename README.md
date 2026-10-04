@@ -2,7 +2,7 @@
 
 ![Screenshot](assets/screenshot.png)
 
-> Displays the Auction House and vendor value of items stored in your Warband Bank and regular Bank — at a glance, every time you open the bank.
+> Displays the Auction House and vendor value of everything in your bank and bags — at a glance, every time you open the bank. On Retail it covers your Warband Bank too.
 
 **Requires [Auctionator](https://www.curseforge.com/wow/addons/auctionator) for AH prices.**
 
@@ -10,21 +10,34 @@
 
 ## What it does
 
-WarbankValue adds a small, movable summary panel that appears whenever you open your bank. It scans all Warband Bank tabs and your regular Bank slots and shows:
+WarbankValue adds a small, movable summary panel that appears whenever you open your bank. It scans your regular Bank slots — and on Retail every Warband Bank tab — and shows:
 
 - **AH value** — estimated market value via Auctionator prices
 - **Vendor value** — Blizzard sell price for bound and non-auctionable items
 - **Bags value** — AH and vendor value of your carried bags (backpack, bags, reagent bag)
-- **Per-tab breakdown** — AH and vendor value for each Warband Bank tab
+- **Per-tab breakdown** — AH and vendor value for each Warband Bank tab (Retail)
 - **Top 3 AH items** — the most valuable auctionable items across all storage, aggregated per item, in quality colors with item tooltips on hover
 - **Missing prices** — count of items Auctionator has no price data for yet (shown only when > 0)
 - **Minimap button** — click to toggle the panel, hover for live AH/vendor totals, drag to set both its angle and its distance from the minimap
 
-Soulbound and Warbound items are correctly excluded from AH valuation and counted at vendor price instead. Items with no AH price also fall back to their vendor price, so the totals always cover everything in the bank. The panel resizes to fit its content, and if Auctionator is missing a notice is shown instead of silent zeros.
+Soulbound items (and, on Retail, Warbound items) are correctly excluded from AH valuation and counted at vendor price instead. Items with no AH price also fall back to their vendor price, so the totals always cover everything in the bank. The panel resizes to fit its content, and if Auctionator is missing a notice is shown instead of silent zeros.
+
+## Retail and WoW: Forever
+
+WarbankValue runs on both games, each loading its own TOC file. WoW: Forever has no Warband Bank, so there the panel covers your bank and bags, and the Warband section simply does not appear.
+
+| | Retail | WoW: Forever |
+|---|---|---|
+| Regular Bank | Yes | Yes |
+| Bags | Yes | Yes |
+| Warband Bank, per-tab breakdown | Yes | No - the game has no Warband Bank |
+| Latest file on CurseForge | 0.1.0 (0.2.0 once tested on Retail) | 0.2.0 |
+
+On the WoW: Forever beta the client does not load saved settings yet, so the panel position and options reset at every launch. That is a client bug and goes away once Blizzard fixes it.
 
 ## Installation
 
-1. Download and extract the `WarbankValue` folder into your `World of Warcraft/_retail_/Interface/AddOns/` directory
+1. Download and extract the `WarbankValue` folder into your game's `Interface/AddOns/` directory (`_retail_` for Retail, `_classic_beta_` for the WoW: Forever beta)
 2. Make sure [Auctionator](https://www.curseforge.com/wow/addons/auctionator) is installed — WarbankValue uses its pricing API
 3. Reload your UI or log in
 4. Open your bank — the summary panel appears automatically
@@ -43,19 +56,21 @@ Soulbound and Warbound items are correctly excluded from AH valuation and counte
 
 ## Notes
 
-- The panel is **draggable** — position is saved between sessions
+- The panel is **draggable** — position is saved between sessions (see the WoW: Forever note above)
 - AH prices reflect Auctionator's local scan data; run an Auctionator scan for best accuracy
 - Items with no price data are counted as "missing" and listed via `/wbv missing`
 - Async item data loading is handled gracefully — the panel refreshes automatically when data arrives
 
 ## Compatibility
 
-- **Interface:** 12.1.0 (Midnight)
+- **Interface:** 12.1.0 (Midnight, Retail) and 16001 (WoW: Forever, game version 1.60.1)
 - **Dependency:** Auctionator (optional but required for AH prices)
 
 ## Changelog
 
 ### 0.2.0
+- WoW: Forever support: its own TOC (interface 16001), and the Warband section hides itself where the game has no Warband Bank
+- Published on CurseForge for WoW: Forever; Retail follows once this version has been tested there
 - New Bags section: AH and vendor value of the carried inventory, included in the Total
 - `/wbv show` now rescans on open: Bags are always live; Bank/Warband keep the last scan when the bank is out of reach
 - Bank and Warband sections appear only once a scan has actually seen them, and keep their values after you leave the bank
