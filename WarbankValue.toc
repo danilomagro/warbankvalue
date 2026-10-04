@@ -5,6 +5,7 @@
 ## Version: 0.2.0
 ## OptionalDeps: Auctionator
 ## SavedVariables: WarbankValueDB
+## X-Curse-Project-ID: 1526092
 
 Scanner.lua
 UI.lua

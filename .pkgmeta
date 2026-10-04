@@ -1,10 +1,9 @@
 package-as: WarbankValue
 
-enable-nolib-creation: yes
-
 ignore:
   - .pkgmeta
   - .git
+  - .github
   - .gitignore
   - assets
   - README.md
