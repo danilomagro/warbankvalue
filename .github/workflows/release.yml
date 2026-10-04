@@ -1,5 +1,11 @@
 # Packages the addon and publishes it whenever a version tag is pushed:
-#   git tag v0.2.0 && git push origin v0.2.0
+#   git tag 0.2.1 && git push origin 0.2.1
+#
+# Tags have no "v" so the CurseForge file is named "WarbankValue 0.2.1", like
+# the files uploaded by hand. The packager derives the file type from the tag:
+# "beta" or "alpha" in it makes a Beta or Alpha file, which the CurseForge app
+# only delivers to users who opted in to those - plain version tags give a
+# Release. The -n template also keeps "-forever" out of the file name.
 #
 # "-g forever" uploads for WoW: Forever only (1.60.1). The packager checks the
 # base WarbankValue.toc for a matching interface, so it lists 16001 next to
@@ -15,7 +21,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - "[0-9]*"
 
 permissions:
   contents: write
@@ -33,4 +39,4 @@ jobs:
 
       - uses: BigWigsMods/packager@v2
         with:
-          args: -g forever
+          args: '-g forever -n "{package-name}-{project-version}:{package-name} {project-version}"'
